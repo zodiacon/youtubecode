@@ -1,2 +1,6 @@
-# youtubecode
-Youtube channel sample code
+# Youtube Channel Code
+
+Youtube channel sample code.
+
+Channel URL: https://www.youtube.com/@zodiacon
+
