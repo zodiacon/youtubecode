@@ -16,12 +16,15 @@ DWORD GetThreadInProcess(DWORD pid) {
 
 	Thread32First(hSnapshot, &te);
 
+	auto tid = 0;
 	while (Thread32Next(hSnapshot, &te)) {
-		if (te.th32OwnerProcessID == pid)
-			return te.th32ThreadID;
+		if (te.th32OwnerProcessID == pid) {
+			tid = te.th32ThreadID;
+			break;
+		}
 	}
 	CloseHandle(hSnapshot);
-	return 0;
+	return tid;
 }
 
 int main(int argc, const char* argv[]) {
