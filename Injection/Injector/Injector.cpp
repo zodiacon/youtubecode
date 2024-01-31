@@ -31,6 +31,7 @@ int main(int argc, const char* argv[]) {
 			GetModuleHandle(L"kernel32.dll"), "LoadLibraryA"),
 		p, 0, nullptr);
 	assert(hThread);
+	WaitForSingleObject(hThread, INFINITE);
 
 	CloseHandle(hThread);
 	CloseHandle(hProcess);
