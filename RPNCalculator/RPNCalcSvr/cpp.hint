@@ -1,0 +1,2 @@
+#define RPNCALCSVR_API __declspec(dllexport)
+#define RPNCALCSVR_API __declspec(dllimport)
