@@ -1,0 +1,6 @@
+[
+    uuid(4F072B5A-ECB8-491D-947D-FB3DDD11877B)
+]
+interface Calculator {
+    int Add([in] int a, [in] int b);
+}
