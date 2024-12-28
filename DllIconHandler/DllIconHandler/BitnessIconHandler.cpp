@@ -24,9 +24,7 @@ HRESULT __stdcall CBitnessIconHandler::Load(LPCOLESTR pszFileName, DWORD dwMode)
     hDll = (HMODULE)((ULONG_PTR)hDll & ~1);
     auto header = ImageNtHeader(hDll);
     if (header) {
-        auto machine = header->FileHeader.Machine;
-        m_Bitness = header->Signature == IMAGE_NT_OPTIONAL_HDR64_MAGIC || machine == IMAGE_FILE_MACHINE_AMD64 
-            || machine == IMAGE_FILE_MACHINE_ARM64 ? ModuleBitness::Bits64 : ModuleBitness::Bits32;
+        m_Bitness = header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC ? ModuleBitness::Bits64 : ModuleBitness::Bits32;
         ATLTRACE(L"Bitness of %s is %d\n", pszFileName, m_Bitness);
     }
     FreeLibrary(hDll);
