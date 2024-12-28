@@ -1,0 +1,16 @@
+HKCR
+{
+	NoRemove CLSID
+	{
+		ForceRemove {03aaf250-34fc-49ab-99ad-928f365d7834} = s 'BitnessIconHandler class'
+		{
+			ForceRemove Programmable
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			TypeLib = s '{f460f82a-b79c-45e0-b3b6-b2aa18d5717b}'
+			Version = s '1.0'
+		}
+	}
+}
