@@ -26,7 +26,12 @@ HRESULT __stdcall ScriptHost::GetLCID(LCID* plcid) {
 }
 
 HRESULT __stdcall ScriptHost::GetItemInfo(LPCOLESTR pstrName, DWORD dwReturnMask, IUnknown** ppiunkItem, ITypeInfo** ppti) {
-    return E_NOTIMPL;
+    if (_wcsicmp(pstrName, L"SHell") == 0) {
+        if (m_Shell == nullptr)
+            m_Shell.CoCreateInstance(L"shell.Application");
+        return m_Shell.QueryInterface(ppiunkItem);
+    }
+    return E_INVALIDARG;
 }
 
 HRESULT __stdcall ScriptHost::GetDocVersionString(BSTR* pbstrVersion) {

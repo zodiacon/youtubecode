@@ -18,15 +18,17 @@ int main() {
 	ScriptHost host;
 	hr = engine->SetScriptSite(&host);
 
+	engine->AddNamedItem(L"Shell", SCRIPTITEM_ISVISIBLE | SCRIPTITEM_GLOBALMEMBERS);
+
 	CComQIPtr<IActiveScriptParse> parse(engine);
 	ATLASSERT(parse);
 
 	CComVariant result;
 	EXCEPINFO exceptInfo;
 	hr = parse->ParseScriptText(LR"(
-set shell = CreateObject("shell.application")
-msgbox "Opening System32", vbInformation, "VBScript Example"
-shell.ExploreX "c:\windows\System32"
+shellexecute "mspaint"
+explore "c:\windows"
+msgbox "hello"
 	)", nullptr, nullptr, nullptr, 0, 1, 0, &result, &exceptInfo);
 
 	return 0;

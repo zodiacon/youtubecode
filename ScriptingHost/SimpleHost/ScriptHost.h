@@ -2,6 +2,7 @@
 
 #include <Windows.h>
 #include <ActivScp.h>
+#include <atlcomcli.h>
 
 class ScriptHost : 
 	public IActiveScriptSite,
@@ -24,5 +25,8 @@ public:
 	// Inherited via IActiveScriptSiteWindow
 	HRESULT __stdcall GetWindow(HWND* phwnd) override;
 	HRESULT __stdcall EnableModeless(BOOL fEnable) override;
+
+private:
+	CComPtr<IDispatch> m_Shell;
 };
 
