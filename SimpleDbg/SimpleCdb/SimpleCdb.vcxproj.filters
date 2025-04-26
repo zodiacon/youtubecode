@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="x86">
+      <UniqueIdentifier>{6b0d89d2-93b9-4f5a-9826-351e6a95a966}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="arm64">
+      <UniqueIdentifier>{0f9b7091-aa34-442d-818f-88b40f1ea550}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="amd64">
+      <UniqueIdentifier>{c3c967ae-0473-49b2-803b-b614493831c1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="SimpleCdb.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Debugger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="x86\msdia140.dll">
+      <Filter>x86</Filter>
+    </None>
+    <None Include="x86\dbgmodel.dll">
+      <Filter>x86</Filter>
+    </None>
+    <None Include="x86\dbghelp.dll">
+      <Filter>x86</Filter>
+    </None>
+    <None Include="x86\dbgeng.dll">
+      <Filter>x86</Filter>
+    </None>
+    <None Include="x86\dbgcore.dll">
+      <Filter>x86</Filter>
+    </None>
+    <None Include="arm64\msdia140.dll">
+      <Filter>arm64</Filter>
+    </None>
+    <None Include="arm64\dbgmodel.dll">
+      <Filter>arm64</Filter>
+    </None>
+    <None Include="arm64\dbghelp.dll">
+      <Filter>arm64</Filter>
+    </None>
+    <None Include="arm64\dbgeng.dll">
+      <Filter>arm64</Filter>
+    </None>
+    <None Include="arm64\dbgcore.dll">
+      <Filter>arm64</Filter>
+    </None>
+    <None Include="amd64\msdia140.dll">
+      <Filter>amd64</Filter>
+    </None>
+    <None Include="amd64\dbgmodel.dll">
+      <Filter>amd64</Filter>
+    </None>
+    <None Include="amd64\dbghelp.dll">
+      <Filter>amd64</Filter>
+    </None>
+    <None Include="amd64\dbgeng.dll">
+      <Filter>amd64</Filter>
+    </None>
+    <None Include="amd64\dbgcore.dll">
+      <Filter>amd64</Filter>
+    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+</Project>
