@@ -10,6 +10,11 @@ public:
 	HRESULT AttachToProcess(DWORD pid);
 	HRESULT WaitForEvent();
 	bool IsInBreakpoint() const;
+	HRESULT ExecuteCommand(PCSTR cmd);
+	void DisplayPrompt();
+	ULONG GetState() const;
+	void DisplayState();
+	void Break();
 
 private:
 	HRESULT __stdcall QueryInterface(REFIID InterfaceId, PVOID* Interface) override;
@@ -29,7 +34,8 @@ private:
 	HRESULT __stdcall ChangeEngineState(ULONG Flags, ULONG64 Argument) override;
 	HRESULT __stdcall ChangeSymbolState(ULONG Flags, ULONG64 Argument) override;
 	HRESULT __stdcall Output(ULONG Mask, PCSTR Text) override;
-	HRESULT __stdcall CreateProcessW(ULONG64 ImageFileHandle, ULONG64 Handle, ULONG64 BaseOffset, ULONG ModuleSize, PCSTR ModuleName, PCSTR ImageName, ULONG CheckSum, ULONG TimeDateStamp, ULONG64 InitialThreadHandle, ULONG64 ThreadDataOffset, ULONG64 StartOffset) noexcept override;
+	HRESULT __stdcall CreateProcessW(ULONG64 ImageFileHandle, ULONG64 Handle, ULONG64 BaseOffset, ULONG ModuleSize, PCSTR ModuleName, 
+		PCSTR ImageName, ULONG CheckSum, ULONG TimeDateStamp, ULONG64 InitialThreadHandle, ULONG64 ThreadDataOffset, ULONG64 StartOffset)override;
 
 private:
 	CComPtr<IDebugClient6> m_Client;
