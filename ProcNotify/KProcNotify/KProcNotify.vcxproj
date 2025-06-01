@@ -108,6 +108,9 @@
   <ItemGroup>
     <ClCompile Include="KProcNotify.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ProcNotifyShared.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
