@@ -3,7 +3,7 @@
 
 #include <Windows.h>
 #include <stdio.h>
-#include "..\KProcNotify/ProcNotifyShared.h"
+#include "../KProcNotify/ProcNotifyShared.h"
 
 void DisplayTime(ULONG64 time) {
 	FILETIME ft;
@@ -47,6 +47,7 @@ int main() {
 		printf("Error: %u\n", GetLastError());
 		return -1;
 	}
+	printf("Open handle: 0x%p\n", hDevice);
 
 	BYTE buffer[4 << 10];
 	DWORD read;
@@ -55,6 +56,7 @@ int main() {
 			DisplayBuffer(buffer, read);
 		Sleep(500);
 	}
+	printf("ReadFile failed: %u\n", GetLastError());
 	CloseHandle(hDevice);
 	return 0;
 }
