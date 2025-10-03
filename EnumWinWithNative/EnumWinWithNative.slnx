@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="EnumWinWithNative/EnumWinWithNative.vcxproj" Id="c74560dc-ead8-4dd1-b94d-f67cc889db13" />
+</Solution>
