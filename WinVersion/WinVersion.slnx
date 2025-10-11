@@ -1,0 +1,10 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="CSWinVer/CSWinVer.csproj" />
+  <Project Path="CSWinVer2/CSWinVer2.csproj" />
+  <Project Path="WinVersion/WinVersion.vcxproj" />
+</Solution>
