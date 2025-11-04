@@ -6,4 +6,5 @@
   </Configurations>
   <Project Path="AmsiDemo/AmsiDemo.vcxproj" Id="e7172b4f-2cf8-4d7f-ba52-004b9f74938d" />
   <Project Path="AmsiDemoCS/AmsiDemoCS.csproj" Id="38e7397f-8442-478d-8f91-34b0f1f15be2" />
+  <Project Path="MultiScan/MultiScan.vcxproj" Id="c3d4d718-0cd1-445b-a53e-484a4007968b" />
 </Solution>
