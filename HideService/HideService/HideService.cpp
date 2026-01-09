@@ -4,6 +4,8 @@
 #include <Windows.h>
 #include <stdio.h>
 #include <sddl.h>
+#include <AclAPI.h>
+#include <malloc.h>
 
 DWORD HideService(PCWSTR name) {
 	auto hScm = OpenSCManager(nullptr, nullptr, SC_MANAGER_ALL_ACCESS);
@@ -40,7 +42,34 @@ DWORD HideService(PCWSTR name) {
 	//if (!AddAccessDeniedAce(dacl, ACL_REVISION, GENERIC_READ, adminSid))
 	//	return GetLastError();
 
-	//SetServiceObjectSecurity(
+	PACL newDacl;
+	EXPLICIT_ACCESS ea{};
+	ea.grfAccessPermissions = GENERIC_READ;
+	ea.grfAccessMode = DENY_ACCESS;
+	ea.grfInheritance = NO_INHERITANCE;
+	ea.Trustee.TrusteeForm = TRUSTEE_IS_SID;
+	ea.Trustee.ptstrName = (PWSTR)adminSid;
+
+	auto err = SetEntriesInAcl(1, &ea, dacl, &newDacl);
+	if (err != ERROR_SUCCESS)
+		return err;
+
+	SECURITY_DESCRIPTOR absSD;
+	size = sizeof(absSD);
+	DWORD daclSize = 128, saclSize = 128;
+	BYTE ownerSid[SECURITY_MAX_SID_SIZE], group[SECURITY_MAX_SID_SIZE];
+	DWORD ownerSize = sizeof(ownerSid), groupSize = sizeof(group);
+	PACL absDacl = (PACL)_malloca(daclSize), absSacl = (PACL)_malloca(saclSize);
+
+	if (!MakeAbsoluteSD(sd, &absSD, &size, absDacl, &daclSize, absSacl, &saclSize, ownerSid, &ownerSize,
+		group, &groupSize))
+		return GetLastError();
+
+	if (!SetSecurityDescriptorDacl(&absSD, TRUE, newDacl, FALSE))
+		return GetLastError();
+
+	if (!SetServiceObjectSecurity(hService, DACL_SECURITY_INFORMATION, &absSD))
+		return GetLastError();
 
 	return ERROR_SUCCESS;
 }

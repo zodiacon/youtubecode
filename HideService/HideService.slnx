@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="HideService/HideService.vcxproj" />
+  <Project Path="HideService/HideService.vcxproj" Id="ea39c354-e379-41db-ae78-1d9d49607a7d" />
 </Solution>
