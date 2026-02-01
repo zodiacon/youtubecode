@@ -4,6 +4,7 @@
 #include "framework.h"
 #include "MandelbrotWin32.h"
 #include <complex>
+#include <windowsx.h>
 
 #define MAX_LOADSTRING 100
 
@@ -136,6 +137,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 	static HBITMAP hBitmap;
 	static int bmpWidth = 800, bmpHeight = 600;
 	static Complex from(-1.7, -1.2), to(0.8, 1.2);
+	static bool mouseDown = false;
+	static RECT selectionRect;
 
 	switch (message) {
 		case WM_CREATE:
@@ -154,6 +157,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			int wmId = LOWORD(wParam);
 			// Parse the menu selections:
 			switch (wmId) {
+				case ID_VIEW_RESET:
+				{
+					from = Complex(-1.7, -1.2);
+					to = Complex(0.8, 1.2);
+					DeleteObject(hBitmap);
+					HDC hdc = GetDC(hWnd);
+					hBitmap = CreateCompatibleBitmap(hdc, bmpWidth, bmpHeight);
+					HDC hdcMem = CreateCompatibleDC(hdc);
+					SelectObject(hdcMem, hBitmap);
+					DrawMandelbrot(hdcMem, bmpWidth, bmpHeight, from, to);
+					DeleteDC(hdcMem);
+					ReleaseDC(hWnd, hdc);
+					InvalidateRect(hWnd, nullptr, FALSE);
+					break;
+				}
 				case IDM_ABOUT:
 					DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 					break;
@@ -165,6 +183,50 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			}
 		}
 		break;
+
+		case WM_LBUTTONDOWN:
+			mouseDown = true;
+			selectionRect.left = GET_X_LPARAM(lParam);
+			selectionRect.top = GET_Y_LPARAM(lParam);
+			SetCapture(hWnd);
+			break;
+
+		case WM_ERASEBKGND:
+			return 1;
+
+		case WM_LBUTTONUP:
+		{
+			mouseDown = false;
+			ReleaseCapture();
+
+			RECT rc;
+			GetClientRect(hWnd, &rc);
+			auto size = to - from;
+			from = Complex(from.real() + min(selectionRect.left, selectionRect.right) * size.real() / rc.right,
+				from.imag() + min(selectionRect.top, selectionRect.bottom) * size.imag() / rc.bottom);
+			to = Complex(from.real() + size.real() * abs(selectionRect.right - selectionRect.left) / rc.right,
+				from.imag() + size.imag() * abs(selectionRect.bottom - selectionRect.top) / rc.bottom);
+			DeleteObject(hBitmap);
+			bmpWidth = rc.right; bmpHeight = rc.bottom;
+			HDC hdc = GetDC(hWnd);
+			hBitmap = CreateCompatibleBitmap(hdc, bmpWidth, bmpHeight);
+			HDC hdcMem = CreateCompatibleDC(hdc);
+			SelectObject(hdcMem, hBitmap);
+			DrawMandelbrot(hdcMem, bmpWidth, bmpHeight, from, to);
+			DeleteDC(hdcMem);
+			ReleaseDC(hWnd, hdc);
+			InvalidateRect(hWnd, nullptr, FALSE);
+			break;
+		}
+
+		case WM_MOUSEMOVE:
+			if (mouseDown) {
+				selectionRect.right = GET_X_LPARAM(lParam);
+				selectionRect.bottom = GET_Y_LPARAM(lParam);
+				InvalidateRect(hWnd, nullptr, FALSE);
+			}
+			break;
+
 		case WM_PAINT:
 		{
 			PAINTSTRUCT ps;
@@ -176,6 +238,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			GetClientRect(hWnd, &rc);
 			StretchBlt(hdc, 0, 0, rc.right, rc.bottom, hdcMem, 0, 0, bmpWidth, bmpHeight, SRCCOPY);
 			DeleteDC(hdcMem);
+
+			if (mouseDown) {
+				SelectObject(hdc, GetStockObject(DC_PEN));
+				SetDCPenColor(hdc, RGB(255, 0, 0));
+				SelectObject(hdc, GetStockObject(NULL_BRUSH));
+				Rectangle(hdc, selectionRect.left, selectionRect.top, selectionRect.right, selectionRect.bottom);
+			}
 
 			EndPaint(hWnd, &ps);
 		}
