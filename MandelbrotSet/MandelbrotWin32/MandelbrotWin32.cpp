@@ -5,6 +5,8 @@
 #include "MandelbrotWin32.h"
 #include <complex>
 #include <windowsx.h>
+#include <cmath>
+#include <numbers>
 
 #define MAX_LOADSTRING 100
 
@@ -20,9 +22,21 @@ LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 using Complex = std::complex<double>;
+const int Iterations = 400;
+COLORREF rainbow[Iterations + 1];
+
+void CreateRainbow() {
+	const auto pi = std::numbers::pi;
+	for (int i = 0; i <= Iterations; i++) {
+		auto r = (std::sin(i * 2 * pi / Iterations + 0.45) * 255) + 127;
+		auto g = (std::sin(i * 2 * pi / Iterations) * 255) + 127;
+		auto b = (std::sin(1.672 * i * 2 * pi / Iterations - 0.17) * 255) + 127;
+		rainbow[i] = RGB(r, g, b);
+	}
+}
 
 int MandelbrotColor(Complex const& c) {
-	int count = 255;
+	int count = Iterations;
 	Complex z = 0;
 
 	while (count > 0 && std::norm(z) <= 4) {
@@ -40,7 +54,7 @@ void DrawMandelbrot(HDC hdc, int width, int height, Complex const& from, Complex
 		for (int x = 0; x < width; x++) {
 			Complex c(dx * x + from.real(), dy * y + from.imag());
 			auto count = MandelbrotColor(c);
-			auto color = RGB(count, count, count);
+			auto color = count == 0 ? RGB(0, 0, 0) : rainbow[count];
 			SetPixelV(hdc, x, y, color);
 		}
 	}
@@ -53,7 +67,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
-	// TODO: Place code here.
+	CreateRainbow();
 
 	// Initialize global strings
 	LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
