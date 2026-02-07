@@ -28,9 +28,9 @@ COLORREF rainbow[Iterations + 1];
 void CreateRainbow() {
 	const auto pi = std::numbers::pi;
 	for (int i = 0; i <= Iterations; i++) {
-		auto r = (std::sin(i * 2 * pi / Iterations + 0.45) * 255) + 127;
-		auto g = (std::sin(i * 2 * pi / Iterations) * 255) + 127;
-		auto b = (std::sin(1.672 * i * 2 * pi / Iterations - 0.17) * 255) + 127;
+		auto r = int((std::sin(i * 2 * pi / Iterations + 0.45) + 1) / 2 * 255);
+		auto g = int((std::sin(i * 2 * pi / Iterations) + 1) / 2 * 255);
+		auto b = int((std::sin(1.672 * i * 2 * pi / Iterations - 0.17) + 1) / 2 * 255);
 		rainbow[i] = RGB(r, g, b);
 	}
 }
