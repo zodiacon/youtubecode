@@ -1,0 +1,2 @@
+#define MYAPPLET_API __declspec(dllexport)
+#define MYAPPLET_API __declspec(dllimport)
