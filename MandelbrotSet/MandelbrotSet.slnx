@@ -4,6 +4,9 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Project Path="HelloTriangle/D3D12HelloTriangle.vcxproj" Id="5018f6a3-6533-4744-b1fd-727d199fd2e9">
+    <Platform Project="x64" />
+  </Project>
   <Project Path="MandelbrotWin32/MandelbrotWin32.vcxproj" Id="06d424ef-2e43-4904-9894-8eacd001d3b6" />
   <Project Path="MandelWinForms/MandelWinForms.csproj" Id="b2f58c5b-8163-4ed7-8d8f-237bb0d459c7" />
 </Solution>
