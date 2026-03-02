@@ -15,17 +15,45 @@ struct PSInput
     float4 color : COLOR;
 };
 
-PSInput VSMain(float4 position : POSITION, float4 color : COLOR)
+struct VSInput {
+    float4 position : POSITION;
+    float4 color : COLOR;
+};
+
+PSInput VSMain(VSInput input)
 {
     PSInput result;
 
-    result.position = position;
-    result.color = color;
+    result.position = input.position;
+    result.color = input.color;
 
     return result;
 }
 
+int MandelbrotColor(float2 c) {
+    float2 z = 0;
+    int count = 255;
+
+    while (count > 0 && z.x * z.x + z.y * z.y <= 4) {
+        float2 t = z;
+		// z = z * z + c
+        z.x = t.x * t.x - t.y * t.y + c.x;
+        z.y = 2 * t.x * t.y + c.y;
+        count--;
+    }
+    return count;
+}
+
+int Mandelbrot(float2 pos, float2 size) {
+    float2 from = float2(-1.5f, -1.2f);
+    float2 to = float2(0.7f, +1.2f);
+
+    float2 c = from + (to - from) * pos / size;
+    return MandelbrotColor(c);
+}
+
 float4 PSMain(PSInput input) : SV_TARGET
 {
-    return input.color;
+    int count = Mandelbrot(input.position.xy, float2(1600, 900));
+    return float4(count / 255.0f, count / 255.0f, count / 255.0f, 1.0);
 }
