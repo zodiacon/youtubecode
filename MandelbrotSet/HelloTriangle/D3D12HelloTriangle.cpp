@@ -182,6 +182,12 @@ void D3D12HelloTriangle::LoadAssets() {
 		psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 		psoDesc.SampleDesc.Count = 1;
 		ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
+
+		pixelShader.Reset();
+		ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"shaders.hlsl").c_str(), nullptr, nullptr, "PSRectMain", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
+		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+		psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
+		ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_RectPipelineState)));
 	}
 
 	// Create the command list.
@@ -230,6 +236,21 @@ void D3D12HelloTriangle::LoadAssets() {
 		m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
 		m_vertexBufferView.StrideInBytes = sizeof(Vertex);
 		m_vertexBufferView.SizeInBytes = vertexBufferSize;
+
+
+		ThrowIfFailed(m_device->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Buffer(5 * sizeof(Vertex)),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_selectRectBuffer)));
+
+		D3D12_RANGE range{ 0, 0 };
+		m_selectRectBuffer->Map(0, &range, &m_RectPtr);
+		m_selectRectBufferView.BufferLocation = m_selectRectBuffer->GetGPUVirtualAddress();
+		m_selectRectBufferView.StrideInBytes = sizeof(Vertex);
+		m_selectRectBufferView.SizeInBytes = 5 * sizeof(Vertex);
 	}
 
 	// Create synchronization objects and wait until assets have been uploaded to the GPU.
@@ -277,6 +298,23 @@ void D3D12HelloTriangle::OnDestroy() {
 	CloseHandle(m_fenceEvent);
 }
 
+void D3D12HelloTriangle::OnLeftMouseDown(int x, int y) {
+	m_MouseDown = true;
+	m_selectRect.left = m_selectRect.right = x;
+	m_selectRect.top = m_selectRect.bottom = y;
+}
+
+void D3D12HelloTriangle::OnLeftMouseUp(int x, int y) {
+	m_MouseDown = false;
+}
+
+void D3D12HelloTriangle::OnMouseMove(int x, int y) {
+	if (m_MouseDown) {
+		m_selectRect.right = x;
+		m_selectRect.bottom = y;
+	}
+}
+
 void D3D12HelloTriangle::PopulateCommandList() {
 	// Command list allocators can only be reset when the associated 
 	// command lists have finished execution on the GPU; apps should use 
@@ -287,7 +325,7 @@ void D3D12HelloTriangle::PopulateCommandList() {
 	// list, that command list can then be reset at any time and must be before 
 	// re-recording.
 	ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_pipelineState.Get()));
-
+	
 	// Set necessary state.
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 	m_commandList->RSSetViewports(1, &m_viewport);
@@ -306,6 +344,29 @@ void D3D12HelloTriangle::PopulateCommandList() {
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 	m_commandList->DrawInstanced(6, 1, 0, 0);
+
+	if (m_MouseDown) {
+		static const XMFLOAT4 color = { 1, 0, 0, 1 };
+		auto left = m_selectRect.left * 2.f / GetWidth() - 1;
+		auto right = m_selectRect.right * 2.f / GetWidth() - 1;
+		auto top = -m_selectRect.top * 2.f / GetHeight() + 1;
+		auto bottom = -m_selectRect.bottom * 2.f / GetHeight() + 1;
+
+		Vertex selectionRect[] = {
+			{ { left, top, 0 }, color },
+			{ { right, top, 0 }, color },
+			{ { right, bottom, 0 }, color },
+			{ { left, bottom, 0 }, color },
+			{ { left, top, 0 }, color },
+		};
+		memcpy(m_RectPtr, selectionRect, sizeof(selectionRect));
+
+		m_commandList->SetPipelineState(m_RectPipelineState.Get());
+		m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
+		m_commandList->IASetVertexBuffers(0, 1, &m_selectRectBufferView);
+		m_commandList->DrawInstanced(5, 1, 0, 0);
+
+	}
 
 	// Indicate that the back buffer will now be used to present.
 	m_commandList->ResourceBarrier(1, 

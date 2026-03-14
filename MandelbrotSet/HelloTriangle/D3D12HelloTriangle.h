@@ -31,6 +31,9 @@ public:
     virtual void OnUpdate();
     virtual void OnRender();
     virtual void OnDestroy();
+    void OnLeftMouseDown(int x, int y) override;
+    void OnLeftMouseUp(int x, int y) override;
+    void OnMouseMove(int x, int y) override;
 
 private:
     static const UINT FrameCount = 2;
@@ -54,16 +57,24 @@ private:
     ComPtr<ID3D12PipelineState> m_pipelineState;
     ComPtr<ID3D12GraphicsCommandList> m_commandList;
     UINT m_rtvDescriptorSize;
+    ComPtr<ID3D12PipelineState> m_RectPipelineState;
+
+    ComPtr<ID3D12Resource> m_selectRectBuffer;
 
     // App resources.
     ComPtr<ID3D12Resource> m_vertexBuffer;
     D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
+    D3D12_VERTEX_BUFFER_VIEW m_selectRectBufferView;
+    void* m_RectPtr;
 
     // Synchronization objects.
     UINT m_frameIndex;
     HANDLE m_fenceEvent;
     ComPtr<ID3D12Fence> m_fence;
     UINT64 m_fenceValue;
+
+    RECT m_selectRect;
+    bool m_MouseDown{ false };
 
     void LoadPipeline();
     void LoadAssets();

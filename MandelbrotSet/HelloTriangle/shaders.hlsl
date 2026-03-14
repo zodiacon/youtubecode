@@ -57,3 +57,8 @@ float4 PSMain(PSInput input) : SV_TARGET
     int count = Mandelbrot(input.position.xy, float2(1600, 900));
     return float4(count / 255.0f, count / 255.0f, count / 255.0f, 1.0);
 }
+
+float4 PSRectMain(PSInput input) : SV_TARGET
+{
+    return input.color;
+}
