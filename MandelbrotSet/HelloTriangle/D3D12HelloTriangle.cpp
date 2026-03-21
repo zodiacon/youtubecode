@@ -136,7 +136,10 @@ void D3D12HelloTriangle::LoadAssets() {
 	// Create an empty root signature.
 	{
 		CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-		rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		CD3DX12_ROOT_PARAMETER param;
+		param.InitAsConstants(4, 0);
+
+		rootSignatureDesc.Init(1, &param, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 		ComPtr<ID3DBlob> signature;
 		ComPtr<ID3DBlob> error;
@@ -306,6 +309,14 @@ void D3D12HelloTriangle::OnLeftMouseDown(int x, int y) {
 
 void D3D12HelloTriangle::OnLeftMouseUp(int x, int y) {
 	m_MouseDown = false;
+
+	auto size = XMFLOAT2(m_To.x - m_From.x, m_To.y - m_From.y);
+
+	m_From = XMFLOAT2(m_From.x + std::min(m_selectRect.left, m_selectRect.right) * size.x / GetWidth(),
+		m_From.y + std::min(m_selectRect.top, m_selectRect.bottom) * size.y / GetHeight());
+	m_To = XMFLOAT2(m_From.x + size.x * std::abs(m_selectRect.right - m_selectRect.left) / GetWidth(),
+		m_From.y + size.y * std::abs(m_selectRect.bottom - m_selectRect.top) / GetHeight());
+
 }
 
 void D3D12HelloTriangle::OnMouseMove(int x, int y) {
@@ -330,6 +341,10 @@ void D3D12HelloTriangle::PopulateCommandList() {
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 	m_commandList->RSSetViewports(1, &m_viewport);
 	m_commandList->RSSetScissorRects(1, &m_scissorRect);
+
+	m_commandList->SetGraphicsRoot32BitConstants(0, 2, &m_From, 0);
+	m_commandList->SetGraphicsRoot32BitConstants(0, 2, &m_To, 2);
+
 
 	// Indicate that the back buffer will be used as a render target.
 	m_commandList->ResourceBarrier(1, 

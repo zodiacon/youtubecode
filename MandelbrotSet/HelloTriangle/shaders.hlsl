@@ -9,6 +9,9 @@
 //
 //*********************************************************
 
+float2 from : register(b0);
+float2 to : register(b1);
+
 struct PSInput
 {
     float4 position : SV_POSITION;
@@ -45,9 +48,6 @@ int MandelbrotColor(float2 c) {
 }
 
 int Mandelbrot(float2 pos, float2 size) {
-    float2 from = float2(-1.5f, -1.2f);
-    float2 to = float2(0.7f, +1.2f);
-
     float2 c = from + (to - from) * pos / size;
     return MandelbrotColor(c);
 }

@@ -74,6 +74,7 @@ private:
     UINT64 m_fenceValue;
 
     RECT m_selectRect;
+    DirectX::XMFLOAT2 m_From{ -1.5f, -1.2f }, m_To{ 0.7f, 1.2f };
     bool m_MouseDown{ false };
 
     void LoadPipeline();
