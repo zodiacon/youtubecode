@@ -12,6 +12,10 @@
 float2 from : register(b0);
 float2 to : register(b1);
 
+cbuffer RainbowBuffer : register(b2) {
+	float4 RainbowColors[512];
+}
+
 struct PSInput
 {
     float4 position : SV_POSITION;
@@ -35,7 +39,7 @@ PSInput VSMain(VSInput input)
 
 int MandelbrotColor(float2 c) {
     float2 z = 0;
-    int count = 255;
+    int count = 511;
 
     while (count > 0 && z.x * z.x + z.y * z.y <= 4) {
         float2 t = z;
@@ -55,7 +59,10 @@ int Mandelbrot(float2 pos, float2 size) {
 float4 PSMain(PSInput input) : SV_TARGET
 {
     int count = Mandelbrot(input.position.xy, float2(1600, 900));
-    return float4(count / 255.0f, count / 255.0f, count / 255.0f, 1.0);
+    if (count == 0)
+		return float4(0, 0, 0, 1);
+
+    return RainbowColors[count];
 }
 
 float4 PSRectMain(PSInput input) : SV_TARGET

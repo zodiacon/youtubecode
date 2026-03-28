@@ -11,9 +11,11 @@
 
 #include "stdafx.h"
 #include "D3D12HelloTriangle.h"
+#include <cmath>
+#include <numbers>
 
 extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 618; }
-extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
+extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\"; }
 
 D3D12HelloTriangle::D3D12HelloTriangle(UINT width, UINT height, std::wstring name) :
 	DXSample(width, height, name),
@@ -21,6 +23,7 @@ D3D12HelloTriangle::D3D12HelloTriangle(UINT width, UINT height, std::wstring nam
 	m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
 	m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height)),
 	m_rtvDescriptorSize(0) {
+	CreateRainbow();
 }
 
 void D3D12HelloTriangle::OnInit() {
@@ -136,10 +139,11 @@ void D3D12HelloTriangle::LoadAssets() {
 	// Create an empty root signature.
 	{
 		CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-		CD3DX12_ROOT_PARAMETER param;
-		param.InitAsConstants(4, 0);
+		CD3DX12_ROOT_PARAMETER param[2];
+		param[0].InitAsConstants(4, 0);
+		param[1].InitAsConstantBufferView(2);
 
-		rootSignatureDesc.Init(1, &param, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		rootSignatureDesc.Init(2, param, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 		ComPtr<ID3DBlob> signature;
 		ComPtr<ID3DBlob> error;
@@ -216,14 +220,16 @@ void D3D12HelloTriangle::LoadAssets() {
 
 		const UINT vertexBufferSize = sizeof(triangleVertices);
 
+		CD3DX12_HEAP_PROPERTIES uploadHeapProps(D3D12_HEAP_TYPE_UPLOAD);
 		// Note: using upload heaps to transfer static data like vert buffers is not 
 		// recommended. Every time the GPU needs it, the upload heap will be marshalled 
 		// over. Please read up on Default Heap usage. An upload heap is used here for 
 		// code simplicity and because there are very few verts to actually transfer.
+		auto vb = CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize);
 		ThrowIfFailed(m_device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			&uploadHeapProps,
 			D3D12_HEAP_FLAG_NONE,
-			&CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
+			&vb,
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
 			IID_PPV_ARGS(&m_vertexBuffer)));
@@ -240,11 +246,11 @@ void D3D12HelloTriangle::LoadAssets() {
 		m_vertexBufferView.StrideInBytes = sizeof(Vertex);
 		m_vertexBufferView.SizeInBytes = vertexBufferSize;
 
-
+		vb = CD3DX12_RESOURCE_DESC::Buffer(5 * sizeof(Vertex));
 		ThrowIfFailed(m_device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			&uploadHeapProps,
 			D3D12_HEAP_FLAG_NONE,
-			&CD3DX12_RESOURCE_DESC::Buffer(5 * sizeof(Vertex)),
+			&vb,
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
 			IID_PPV_ARGS(&m_selectRectBuffer)));
@@ -254,6 +260,22 @@ void D3D12HelloTriangle::LoadAssets() {
 		m_selectRectBufferView.BufferLocation = m_selectRectBuffer->GetGPUVirtualAddress();
 		m_selectRectBufferView.StrideInBytes = sizeof(Vertex);
 		m_selectRectBufferView.SizeInBytes = 5 * sizeof(Vertex);
+
+		auto rb = CD3DX12_RESOURCE_DESC::Buffer(m_Rainbow.size() * sizeof(float) * 4);
+		ThrowIfFailed(m_device->CreateCommittedResource(
+			&uploadHeapProps,
+			D3D12_HEAP_FLAG_NONE,
+			&rb,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_RainbowBuffer)));
+
+		// Copy the rainbow colors
+		void* rainbow;
+		ThrowIfFailed(m_RainbowBuffer->Map(0, &readRange, &rainbow));
+		memcpy(rainbow, m_Rainbow.data(), m_Rainbow.size() * sizeof(float) * 4);
+		m_RainbowBuffer->Unmap(0, nullptr);
+
 	}
 
 	// Create synchronization objects and wait until assets have been uploaded to the GPU.
@@ -326,6 +348,17 @@ void D3D12HelloTriangle::OnMouseMove(int x, int y) {
 	}
 }
 
+void D3D12HelloTriangle::CreateRainbow() {
+	m_Rainbow.resize(512 * 4);
+	using std::numbers::pi;
+	for (int i = 0; i < m_Rainbow.size(); i += 4) {
+		m_Rainbow[i] = float((std::sin(3.123 * 2 * i * pi / m_Rainbow.size() - 0.93f) + 1) / 2);
+		m_Rainbow[i + 1] = float((std::sin(4.1020F * 2 * i * pi / m_Rainbow.size() + 1.8344f) + 1) / 2);
+		m_Rainbow[i + 2] = float((std::sin(0.76273f * 2 * i * pi / m_Rainbow.size() + 1.1726f) + 1) / 2);
+		m_Rainbow[i + 3] = 1;
+	}
+}
+
 void D3D12HelloTriangle::PopulateCommandList() {
 	// Command list allocators can only be reset when the associated 
 	// command lists have finished execution on the GPU; apps should use 
@@ -344,11 +377,11 @@ void D3D12HelloTriangle::PopulateCommandList() {
 
 	m_commandList->SetGraphicsRoot32BitConstants(0, 2, &m_From, 0);
 	m_commandList->SetGraphicsRoot32BitConstants(0, 2, &m_To, 2);
-
+	m_commandList->SetGraphicsRootConstantBufferView(1, m_RainbowBuffer->GetGPUVirtualAddress());
 
 	// Indicate that the back buffer will be used as a render target.
-	m_commandList->ResourceBarrier(1, 
-		&CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+	auto t = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	m_commandList->ResourceBarrier(1, &t);
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
 	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
@@ -384,8 +417,8 @@ void D3D12HelloTriangle::PopulateCommandList() {
 	}
 
 	// Indicate that the back buffer will now be used to present.
-	m_commandList->ResourceBarrier(1, 
-		&CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+	t = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	m_commandList->ResourceBarrier(1, &t);
 
 	ThrowIfFailed(m_commandList->Close());
 }

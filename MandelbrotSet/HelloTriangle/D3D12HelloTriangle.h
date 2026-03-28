@@ -12,6 +12,7 @@
 #pragma once
 
 #include "DXSample.h"
+#include <vector>
 
 using namespace DirectX;
 
@@ -36,6 +37,7 @@ public:
     void OnMouseMove(int x, int y) override;
 
 private:
+    void CreateRainbow();
     static const UINT FrameCount = 2;
 
     struct Vertex
@@ -66,6 +68,7 @@ private:
     D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
     D3D12_VERTEX_BUFFER_VIEW m_selectRectBufferView;
     void* m_RectPtr;
+    ComPtr<ID3D12Resource> m_RainbowBuffer;
 
     // Synchronization objects.
     UINT m_frameIndex;
@@ -75,6 +78,8 @@ private:
 
     RECT m_selectRect;
     DirectX::XMFLOAT2 m_From{ -1.5f, -1.2f }, m_To{ 0.7f, 1.2f };
+    std::vector<float> m_Rainbow;
+
     bool m_MouseDown{ false };
 
     void LoadPipeline();
