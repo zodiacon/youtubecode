@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="RunETW/RunETW.vcxproj" Id="1b446e28-6e68-4f8d-b219-072050a0c55c" />
+</Solution>
