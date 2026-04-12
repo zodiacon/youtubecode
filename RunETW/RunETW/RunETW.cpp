@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <tdh.h>
 #include <memory>
+#include <cassert>
+
+#pragma comment(lib, "tdh")
 
 void OnEvent(PEVENT_RECORD rec) {
 	auto& header = rec->EventHeader;
@@ -16,6 +19,45 @@ void OnEvent(PEVENT_RECORD rec) {
 		st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
 		header.ProcessId, header.ThreadId);
 
+	ULONG size = 0;
+	TdhGetEventInformation(rec, 0, nullptr, nullptr, &size);
+	assert(size);
+	auto buffer = std::make_unique<BYTE[]>(size);
+	auto info = (TRACE_EVENT_INFO*)buffer.get();
+	TdhGetEventInformation(rec, 0, nullptr, info, &size);
+
+	if (info->EventNameOffset)
+		printf(" Event name: %ws", (PCWSTR)(buffer.get() + info->EventNameOffset));
+	if(info->KeywordsNameOffset)
+		printf(" Keywords: %ws", (PCWSTR)(buffer.get() + info->KeywordsNameOffset));
+	if (info->OpcodeNameOffset)
+		printf(" Opcode: %ws", (PCWSTR)(buffer.get() + info->OpcodeNameOffset));
+	if (info->TaskNameOffset)
+		printf(" Task: %ws ", (PCWSTR)(buffer.get() + info->TaskNameOffset));
+	if (info->LevelNameOffset)
+		printf(" Level: %ws ", (PCWSTR)(buffer.get() + info->LevelNameOffset));
+	printf("\n");
+
+	auto len = rec->UserDataLength;
+	auto data = (PBYTE)rec->UserData;
+	auto pointerSize = (rec->EventHeader.Flags & EVENT_HEADER_FLAG_32_BIT_HEADER) ? 4 : 8;
+	ULONG start = 0;
+
+	WCHAR text[256];
+	for (DWORD i = 0; i < info->TopLevelPropertyCount && len > 0; i++) {
+		EVENT_PROPERTY_INFO& pi = info->EventPropertyInfoArray[i];
+		printf("  Name: %ws ", (PCWSTR)(buffer.get() + pi.NameOffset));
+		if (pi.Flags == 0) {
+			USHORT consumed;
+			ULONG textLen = _countof(text);
+			if (ERROR_SUCCESS == TdhFormatProperty(info, nullptr, pointerSize, pi.nonStructType.InType, pi.nonStructType.OutType,
+				pi.length, len, data, &textLen, text, &consumed)) {
+				printf("%ws\n", text);
+				data += consumed;
+				len -= consumed;
+			}
+		}
+	}
 }
 
 int wmain(int argc, const wchar_t* argv[]) {
