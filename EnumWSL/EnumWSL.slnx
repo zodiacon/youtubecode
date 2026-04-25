@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="EnumWSL/EnumWSL.vcxproj" Id="07fb2017-ffa3-4617-a3c0-6d2487ee589f" />
+</Solution>
