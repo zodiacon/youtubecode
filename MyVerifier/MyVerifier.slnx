@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="MyVerifier/MyVerifier.vcxproj" Id="b0eb5fa8-bd33-4a31-a606-2e75b85c9cf0" />
+</Solution>
