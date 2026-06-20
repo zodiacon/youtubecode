@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="LogonSessions/LogonSessions.vcxproj" Id="449aa7f4-3d94-4fb8-b032-03ab2a2ae954" />
+</Solution>
