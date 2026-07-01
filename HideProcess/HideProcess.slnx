@@ -1,0 +1,11 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="HideProcess/HideProcess.vcxproj" />
+  <Project Path="KHideProcess/KHideProcess.vcxproj">
+    <Platform Project="x64" />
+    <Deploy />
+  </Project>
+</Solution>
