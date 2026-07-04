@@ -3,7 +3,7 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="HideProcess/HideProcess.vcxproj" />
+  <Project Path="HideProcess/HideProcess.vcxproj" Id="ef07046b-3ff4-4ded-81b8-0e9673aba8b5" />
   <Project Path="KHideProcess/KHideProcess.vcxproj">
     <Platform Project="x64" />
     <Deploy />

