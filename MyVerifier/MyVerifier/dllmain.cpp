@@ -85,7 +85,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 
 		case DLL_PROCESS_VERIFIER:
 			*(PVOID*)lpReserved = &desc;
-			//
 			break;
 	}
 	return TRUE;
@@ -96,11 +95,17 @@ LPVOID WINAPI HookVirtualAlloc(
 	_In_     SIZE_T dwSize,
 	_In_     DWORD flAllocationType,
 	_In_     DWORD flProtect) {
-	OutputDebugStringA(std::format("TID: {} Address: {:p} Size: {} Type: {} Protect: {}",
-		GetCurrentThreadId(), lpAddress, dwSize, flAllocationType, flProtect).c_str());
+	char msg[256];
+	//OutputDebugStringA(std::format("TID: {} Address: {:p} Size: {} Type: {} Protect: {}",
+	//	GetCurrentThreadId(), lpAddress, dwSize, flAllocationType, flProtect).c_str());
+	sprintf_s(msg, "TID: %u Address: 0x%p Size: %lld Type: %d Protect: %d",
+		GetCurrentThreadId(), lpAddress, dwSize, flAllocationType, flProtect);
+	OutputDebugStringA(msg);
 	static const auto org = (decltype(VirtualAlloc)*)funcs[0].ThunkOldAddress;
 	auto p = org(lpAddress, dwSize, flAllocationType, flProtect);
-	OutputDebugStringA(std::format(" Result: {:p}\n", p).c_str());
+	//OutputDebugStringA(std::format(" Result: {:p}\n", p).c_str());
+	sprintf_s(msg, " Result: 0x%p\n", p);
+	OutputDebugStringA(msg);
 
 	return p;
 }
