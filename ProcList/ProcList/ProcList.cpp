@@ -86,4 +86,6 @@ void EnumProcessesRaw() {
 
 int main() {
 	EnumProcessesRaw();
+
+	return 0;
 }
