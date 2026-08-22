@@ -6,6 +6,8 @@
 #include <string>
 #include <winternl.h>
 #include <format>
+#include <Psapi.h>
+#include <map>
 
 #pragma comment(lib, "ntdll")
 
@@ -46,16 +48,57 @@ std::string GetBlockProtection(DWORD prot) {
 	return s;
 }
 
+std::string NtPathToDosPath(const char* path) {
+	if (path[0] != '\\')
+		return path;
+
+	static std::map<std::string, std::string> driveMaps;
+	if (driveMaps.empty()) {
+		DWORD drives = GetLogicalDrives();
+		char drive[] = "X:";
+		int bit = 0;
+		// 000000000001100
+		while (drives) {
+			char target[128];
+			if (drives & 1) {
+				drive[0] = 'A' + bit;
+				if (QueryDosDeviceA(drive, target, _countof(target))) {
+					driveMaps.insert({ target, drive });
+				}
+			}
+			bit++;
+			drives >>= 1;
+		}
+	}
+
+	// \Device\HardiskVolume3\ -> c:
+	auto bs = strchr(path + 9, '\\');
+	std::string ntdrive = std::string(path, bs);
+
+	if (auto it = driveMaps.find(ntdrive); it == driveMaps.end())
+		return path;
+	else
+		return std::string(it->second) + bs;
+}
+
 std::string GetBlockDetails(HANDLE hProcess, MEMORY_BASIC_INFORMATION const& mbi) {
 	if (mbi.State != MEM_COMMIT)
 		return "";
 
 	std::string details;
-	PROCESS_BASIC_INFORMATION pbi;
-	if (0 == NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), nullptr)) {
-		if (pbi.PebBaseAddress >= mbi.BaseAddress && (PBYTE)pbi.PebBaseAddress < (PBYTE)mbi.BaseAddress + mbi.RegionSize) {
-			details = std::format("PEB (0x{})", (PVOID)pbi.PebBaseAddress);
-		}
+	static PROCESS_BASIC_INFORMATION pbi;
+	if (pbi.PebBaseAddress == nullptr) {
+		NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), nullptr);
+	}
+	if (pbi.PebBaseAddress && pbi.PebBaseAddress >= mbi.BaseAddress && (PBYTE)pbi.PebBaseAddress < (PBYTE)mbi.BaseAddress + mbi.RegionSize) {
+		details = std::format("PEB (0x{})", (PVOID)pbi.PebBaseAddress);
+		return details;
+	}
+
+	if (mbi.Type == MEM_MAPPED || mbi.Type == MEM_IMAGE) {
+		char path[MAX_PATH];
+		if (GetMappedFileNameA(hProcess, mbi.BaseAddress, path, _countof(path)))
+			return NtPathToDosPath(path);
 	}
 
 	return details;
