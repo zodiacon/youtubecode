@@ -8,10 +8,12 @@
 #include <format>
 #include <Psapi.h>
 #include <TlHelp32.h>
+#include <DbgHelp.h>
 #include <map>
 #include <vector>
 
 #pragma comment(lib, "ntdll")
+#pragma comment(lib, "dbghelp")
 
 struct ThreadInfo {
 	DWORD Id;
@@ -128,6 +130,26 @@ std::string NtPathToDosPath(const char* path) {
 		return std::string(it->second) + bs;
 }
 
+std::string GetPESectionName(HANDLE hProces, MEMORY_BASIC_INFORMATION const& mbi) {
+	if (mbi.AllocationBase == mbi.BaseAddress)
+		return "(header)";
+
+	BYTE header[4 << 10];
+	if (!ReadProcessMemory(hProces, mbi.AllocationBase, header, sizeof(header), nullptr))
+		return "";
+
+	auto nt = ImageNtHeader(header);
+//	auto dos = (IMAGE_DOS_HEADER*)header;
+//	auto nt = (IMAGE_NT_HEADERS*)(header + dos->e_lfanew);
+	auto sec = IMAGE_FIRST_SECTION(nt);
+	for (int i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++) {
+		auto start = sec->VirtualAddress + (PBYTE)mbi.AllocationBase;
+		if (mbi.BaseAddress >= start && mbi.BaseAddress < start + sec->Misc.VirtualSize)
+			return std::string((PCSTR)sec->Name, (PCSTR)sec->Name + IMAGE_SIZEOF_SHORT_NAME);
+	}
+	return "";
+}
+
 std::string GetBlockDetails(HANDLE hProcess, MEMORY_BASIC_INFORMATION const& mbi) {
 	if (mbi.State != MEM_COMMIT)
 		return "";
@@ -156,8 +178,11 @@ std::string GetBlockDetails(HANDLE hProcess, MEMORY_BASIC_INFORMATION const& mbi
 	}
 	else {
 		char path[MAX_PATH];
-		if (GetMappedFileNameA(hProcess, mbi.BaseAddress, path, _countof(path)))
-			return NtPathToDosPath(path);
+		if (GetMappedFileNameA(hProcess, mbi.BaseAddress, path, _countof(path))) {
+			if(mbi.Type == MEM_MAPPED)
+				return NtPathToDosPath(path);
+			return NtPathToDosPath(path) + " " + GetPESectionName(hProcess, mbi);
+		}
 	}
 	return details;
 }
