@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.7.33711.374
+# Visual Studio Version 18
+VisualStudioVersion = 18.10.12224.181 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimpleDll", "SimpleDll\SimpleDll.vcxproj", "{ADB5A035-1862-42B6-B6B6-A944A90A29FE}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "APCInjector", "APCInjector\APCInjector.vcxproj", "{59284069-F149-4201-924E-DF50437E76D0}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InjectShellcode", "InjectShellcode\InjectShellcode.vcxproj", "{72A69768-868F-41BF-9122-4BD5A2AB80AE}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinEventHook", "WinEventHook\WinEventHook.vcxproj", "{C94BAA1E-5C67-4527-B655-51E014D6FC75}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,14 @@ Global
 		{72A69768-868F-41BF-9122-4BD5A2AB80AE}.Release|x64.Build.0 = Release|x64
 		{72A69768-868F-41BF-9122-4BD5A2AB80AE}.Release|x86.ActiveCfg = Release|Win32
 		{72A69768-868F-41BF-9122-4BD5A2AB80AE}.Release|x86.Build.0 = Release|Win32
+		{C94BAA1E-5C67-4527-B655-51E014D6FC75}.Debug|x64.ActiveCfg = Debug|x64
+		{C94BAA1E-5C67-4527-B655-51E014D6FC75}.Debug|x64.Build.0 = Debug|x64
+		{C94BAA1E-5C67-4527-B655-51E014D6FC75}.Debug|x86.ActiveCfg = Debug|Win32
+		{C94BAA1E-5C67-4527-B655-51E014D6FC75}.Debug|x86.Build.0 = Debug|Win32
+		{C94BAA1E-5C67-4527-B655-51E014D6FC75}.Release|x64.ActiveCfg = Release|x64
+		{C94BAA1E-5C67-4527-B655-51E014D6FC75}.Release|x64.Build.0 = Release|x64
+		{C94BAA1E-5C67-4527-B655-51E014D6FC75}.Release|x86.ActiveCfg = Release|Win32
+		{C94BAA1E-5C67-4527-B655-51E014D6FC75}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

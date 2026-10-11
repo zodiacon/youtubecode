@@ -6,16 +6,24 @@
 
 
 // This is an example of an exported variable
-SIMPLEDLL_API int nSimpleDll=0;
+SIMPLEDLL_API int nSimpleDll = 0;
 
 // This is an example of an exported function.
-SIMPLEDLL_API int fnSimpleDll(void)
-{
-    return 0;
+SIMPLEDLL_API int fnSimpleDll(void) {
+	return 0;
 }
 
 // This is the constructor of a class that has been exported.
-CSimpleDll::CSimpleDll()
-{
-    return;
+CSimpleDll::CSimpleDll() {
+	return;
+}
+
+extern "C" void __declspec(dllexport) CALLBACK OnEvent(
+	HWINEVENTHOOK hWinEventHook,
+	DWORD         event,
+	HWND          hwnd,
+	LONG          idObject,
+	LONG          idChild,
+	DWORD         idEventThread,
+	DWORD         dwmsEventTime) {
 }
