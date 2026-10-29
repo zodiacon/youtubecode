@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <utility>
 //#include <winternl.h>
+#include <assert.h>
+#include <string>
 
 #pragma comment(lib, "ntdll")
 
@@ -26,46 +28,92 @@ bool EnumDllsWithAPI(HANDLE hProcess) {
 	return true;
 }
 
-bool EnumDllsWithPeb(HANDLE) {
-	auto peb = NtCurrentTeb()->ProcessEnvironmentBlock;
-	auto head = &peb->Ldr->InMemoryOrderModuleList;
+void* GetProcessPeb(HANDLE hProcess) {
+	PROCESS_BASIC_INFORMATION pbi{};
+	NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), nullptr);
+	return pbi.PebBaseAddress;
+}
 
-	for (LIST_ENTRY* next = head->Flink; next != head; next = next->Flink) {
-		LDR_DATA_TABLE_ENTRY* entry = CONTAINING_RECORD(next, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
-		printf("0x%p: %wZ\n", entry->DllBase, &entry->FullDllName);
+bool Write(HANDLE hProcess, void* address, void const* data, DWORD size) {
+	SIZE_T written;
+	return WriteProcessMemory(hProcess, address, data, size, &written) && written == size;
+}
+
+bool Read(HANDLE hProcess, void* address, void* data, DWORD size) {
+	SIZE_T read;
+	return ReadProcessMemory(hProcess, address, data, size, &read) && read == size;
+}
+
+template<typename T>
+T Read(HANDLE hProcess, void* address) {
+	T value;
+	auto b = Read(hProcess, address, &value, sizeof(value));
+	assert(b);
+	return value;
+}
+
+std::wstring ReadUnicodeString(HANDLE hProcess, UNICODE_STRING const& uc) {
+	std::wstring text;
+	text.resize(uc.Length / sizeof(WCHAR));
+	Read(hProcess, uc.Buffer, text.data(), uc.Length);
+	return text;
+}
+
+bool EnumDllsWithPeb(HANDLE hProcess) {
+	auto pebAddress = GetProcessPeb(hProcess);
+	PEB peb = Read<PEB>(hProcess, pebAddress);
+	auto ldr = Read<PEB_LDR_DATA>(hProcess, peb.Ldr);
+	auto head = (LIST_ENTRY*)((PBYTE)peb.Ldr + offsetof(PEB_LDR_DATA, InMemoryOrderModuleList));
+
+	LIST_ENTRY next = Read<LIST_ENTRY>(hProcess, head);
+	for (; next.Flink != head; next = Read<LIST_ENTRY>(hProcess, next.Flink)) {
+		LDR_DATA_TABLE_ENTRY* entryAddress = CONTAINING_RECORD(next.Flink, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
+		auto entry = Read<LDR_DATA_TABLE_ENTRY>(hProcess, entryAddress);
+		printf("0x%p: %ws\n", entry.DllBase, ReadUnicodeString(hProcess, entry.FullDllName).c_str());
 	}
 	return true;
 }
 
-bool HideDll(PCWSTR name) {
-	UNICODE_STRING uname;
-	RtlInitUnicodeString(&uname, name);
-	auto peb = NtCurrentTeb()->ProcessEnvironmentBlock;
-	auto head = &peb->Ldr->InMemoryOrderModuleList;
+bool HideDll(HANDLE hProcess, PCWSTR name) {
+	auto pebAddress = GetProcessPeb(hProcess);
+	PEB peb = Read<PEB>(hProcess, pebAddress);
+	auto ldr = Read<PEB_LDR_DATA>(hProcess, peb.Ldr);
+	auto head = (LIST_ENTRY*)((PBYTE)peb.Ldr + offsetof(PEB_LDR_DATA, InMemoryOrderModuleList));
 
-	for (LIST_ENTRY* next = head->Flink; next != head; next = next->Flink) {
-		LDR_DATA_TABLE_ENTRY* entry = CONTAINING_RECORD(next, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
-		if (RtlEqualUnicodeString(&entry->BaseDllName, &uname, TRUE)) {
-			auto prev = next->Blink;
-			prev->Flink = next->Flink;
-			next->Flink->Blink = prev;
+	LIST_ENTRY next = Read<LIST_ENTRY>(hProcess, head);
+	for (; next.Flink != head; next = Read<LIST_ENTRY>(hProcess, next.Flink)) {
+		LDR_DATA_TABLE_ENTRY* entryAddress = CONTAINING_RECORD(next.Flink, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
+		auto entry = Read<LDR_DATA_TABLE_ENTRY>(hProcess, entryAddress);
+		if (_wcsicmp(ReadUnicodeString(hProcess, entry.BaseDllName).c_str(), name) == 0) {
+			auto current = entry.InMemoryOrderLinks;
+			Write(hProcess, current.Blink, &current.Flink, sizeof(LIST_ENTRY*));
+			Write(hProcess, (PBYTE)current.Flink + sizeof(PVOID), &current.Blink, sizeof(LIST_ENTRY*));
 			return true;
 		}
 	}
 	return false;
 }
 
-int main() {
-	EnumDllsWithAPI(GetCurrentProcess());
-	printf("\n");
-	EnumDllsWithPeb(GetCurrentProcess());
+int main(int argc, const char* argv[]) {
+	auto pid = argc > 1 ? strtoul(argv[1], nullptr, 0) : GetCurrentProcessId();
+	auto hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+	if (!hProcess) {
+		printf("Failed in OpenProcess (%u)\n", GetLastError());
+		return 1;
+	}
 
-	HideDll(L"kernelbase.dll");
+	EnumDllsWithAPI(hProcess);
+	printf("\n");
+	EnumDllsWithPeb(hProcess);
+
+	HideDll(hProcess, L"kernelbase.dll");
 	printf("\n");
 
-	EnumDllsWithAPI(GetCurrentProcess());
+	EnumDllsWithAPI(hProcess);
 	printf("\n");
-	EnumDllsWithPeb(GetCurrentProcess());
+	EnumDllsWithPeb(hProcess);
+
+	CloseHandle(hProcess);
 
 	return 0;
 }
